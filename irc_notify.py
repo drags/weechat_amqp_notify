@@ -7,13 +7,16 @@ import kombu
 from kombu import BrokerConnection
 import socket
 import argparse
-import subprocess
+import pynotify
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=4)
 
 # Title: server(/channel)/user
 class MessageHandler(object):
+    '''Handle unserialized messages from amqp_notify'''
+    def __init__(self):
+        pynotify.init('irc_notify.py')
 
     def private_handler(self, msg):
         '''Handle hilights in private messages and query windows'''
@@ -41,7 +44,9 @@ class MessageHandler(object):
     def send_alert(self, title, message):
         '''Send an alert via notify-OSD'''
         print "Alerting with message: %s %s" % (title, message)
-        p = subprocess.Popen(['notify-send', '-u', 'critical', '-i', 'notification-message-im', title, message])
+        n = pynotify.Notification(title, message, 'notification-message-im')
+        n.set_urgency('critical')
+        n.show()
 
     def catch_all_handler(self, msg):
         print "Got unparsable message"
