@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# Ipython trimmings
 import re
 import time
 import yaml
@@ -12,7 +11,6 @@ import pynotify
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=4)
 
-# Title: server(/channel)/user
 class MessageHandler(object):
     '''Handle unserialized messages from amqp_notify'''
     def __init__(self):
@@ -99,7 +97,7 @@ try:
                 if e.message == 'Socket closed':
                     print 'Rabbitmq socket closed, reconnecting'
                     time.sleep(30)
-                    continue
+                    break
                 else:
                     raise e
 
