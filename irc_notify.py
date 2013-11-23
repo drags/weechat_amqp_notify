@@ -54,8 +54,8 @@ class MessageHandler(object):
 
     def private_handler(self, msg):
         '''Handle hilights in private messages and query windows'''
-        check_day_changed = re.match('^Day changed to', msg[':message'])
-        check_back_on_server = re.match('is back on server$', msg[':message'])
+        check_day_changed = re.search('^Day changed to', msg[':message'])
+        check_back_on_server = re.search('is back on server$', msg[':message'])
 
         if check_day_changed or check_back_on_server:
             return
