@@ -6,15 +6,51 @@ import kombu
 from kombu import BrokerConnection
 import socket
 import argparse
-import pynotify
+import sys
+
+# Platform conditional imports
+if sys.platform.startswith('linux'):
+    import pynotify
+    PLATFORM='linux'
+elif sys.platform.startswith('darwin'):
+    import subprocess
+    import StringIO
+    PLATFORM='osx'
+else:
+    print "Unsupported sys.platform: %s" % sys.platform
+    sys.exit(1)
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=4)
 
 class MessageHandler(object):
     '''Handle unserialized messages from amqp_notify'''
+
+    def _send_to_notifyosd(self, title, message):
+        '''Send an alert to Notify-OSD via pynotify'''
+        print "Alerting with message: %s %s" % (title, message)
+        n = pynotify.Notification(title, message, 'notification-message-im')
+        n.set_urgency('critical')
+        n.show()
+
+    def _send_to_growl(self, title, message):
+        '''Send an alert to Growl via Growlnotify'''
+        print "Alerting with message: %s %s" % (title, message)
+        echo = subprocess.Popen(['echo', message], stdout=subprocess.PIPE)
+        growlnotify = subprocess.Popen(['growlnotify', title], stdin=echo.stdout)
+        echo.stdout.close()
+
     def __init__(self):
-        pynotify.init('irc_notify.py')
+        if PLATFORM == 'linux':
+            # Init pynotify
+            pynotify.init('irc_notify.py')
+            self.send_alert = self._send_to_notifyosd
+        elif PLATFORM == 'osx':
+            self.send_alert = self._send_to_growl
+        else:
+            print "Upsupported PLATFORM: %s" % PLATFORM
+            sys.exit(1)
+
 
     def private_handler(self, msg):
         '''Handle hilights in private messages and query windows'''
@@ -38,13 +74,6 @@ class MessageHandler(object):
         message = '%s' % (msg[':message'])
 
         self.send_alert(title, message)
-
-    def send_alert(self, title, message):
-        '''Send an alert via notify-OSD'''
-        print "Alerting with message: %s %s" % (title, message)
-        n = pynotify.Notification(title, message, 'notification-message-im')
-        n.set_urgency('critical')
-        n.show()
 
     def catch_all_handler(self, msg):
         print "Got unparsable message"
