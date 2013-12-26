@@ -130,7 +130,13 @@ try:
                 else:
                     raise e
 
-            msg = yaml.load(m.body)
+            try:
+                msg = yaml.load(m.body)
+            except:
+                print "I have no idea what to do with: %s" % m.body
+                m.ack()
+                continue
+
             handler = MessageHandler()
             handler.handle_message(msg)
 
