@@ -76,6 +76,7 @@ class MessageHandler(object):
         self.send_alert(title, message)
 
     def catch_all_handler(self, msg):
+        '''Handle unknown message types'''
         print "Got unparsable message"
         pp.pprint(msg)
         print "end unparsable message"
@@ -90,8 +91,11 @@ class MessageHandler(object):
         if 'notify_none' in msg[':tags'] or 'no_highlight' in msg[':tags']:
             print "Ignoring"
             return
-        handler = self.HANDLERS.get(msg[':type'], self.catch_all_handler)
-        handler(self, msg)
+        handler = self.HANDLERS.get(msg[':type'], None)
+        if handler is None:
+            self.catch_all_handler(msg)
+        else:
+            handler(self, msg)
 
 
 p = argparse.ArgumentParser()
