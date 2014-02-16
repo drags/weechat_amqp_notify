@@ -112,23 +112,43 @@ conn_string = 'amqp://%s:%s@%s:%s' % (args.user, args.password, args.host,
                                       args.port)
 
 
+def receive_msgs(body, msg):
+    '''Consumer message handler'''
+    try:
+        _msg = yaml.load(body)
+    except:
+        print "I have no idea what to do with: %s" % body
+        msg.ack()
+        return False
+
+    handler = MessageHandler()
+    handler.handle_message(_msg)
+    msg.ack()
+
 # TODO: declare queues if missing?
 try:
     # Maintain connection to rabbitmq
     while True:
         try:
             conn = BrokerConnection(conn_string)
-            ch = conn.channel()
-            sq = conn.SimpleQueue(args.queue)
+            conn.connect()
         except socket.error:
-            print 'Rabbitmq at %s unavailable, trying again in 30s' % conn_string
+            print 'Rabbitmq at %s unavailable, trying again in 30s' \
+                % conn_string
             time.sleep(30)
             continue
+
+        print conn
+
+        exchange = kombu.Exchange(args.exchange, type='fanout', durable=False)
+        queue = kombu.Queue(args.queue, exchange=exchange)
+        consumer = conn.Consumer(queue, callbacks=[receive_msgs])
+        consumer.consume()
 
         # Fetch and process messages
         while True:
             try:
-                m = sq.get()
+                conn.drain_events()
             except IOError, e:
                 if e.message == 'Socket closed':
                     print 'Rabbitmq socket closed, reconnecting'
@@ -137,16 +157,5 @@ try:
                 else:
                     raise e
 
-            try:
-                msg = yaml.load(m.body)
-            except:
-                print "I have no idea what to do with: %s" % m.body
-                m.ack()
-                continue
-
-            handler = MessageHandler()
-            handler.handle_message(msg)
-
-            m.ack()
 except KeyboardInterrupt:
     pass
