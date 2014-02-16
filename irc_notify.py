@@ -11,17 +11,17 @@ import sys
 # Platform conditional imports
 if sys.platform.startswith('linux'):
     import pynotify
-    PLATFORM='linux'
+    PLATFORM = 'linux'
 elif sys.platform.startswith('darwin'):
     import subprocess
-    import StringIO
-    PLATFORM='osx'
+    PLATFORM = 'osx'
 else:
     print "Unsupported sys.platform: %s" % sys.platform
     sys.exit(1)
 
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=4)
+
 
 class MessageHandler(object):
     '''Handle unserialized messages from amqp_notify'''
@@ -37,7 +37,7 @@ class MessageHandler(object):
         '''Send an alert to Growl via Growlnotify'''
         print "Alerting with message: %s %s" % (title, message)
         echo = subprocess.Popen(['echo', message], stdout=subprocess.PIPE)
-        growlnotify = subprocess.Popen(['growlnotify', title], stdin=echo.stdout)
+        subprocess.Popen(['growlnotify', title], stdin=echo.stdout)
         echo.stdout.close()
 
     def __init__(self):
@@ -50,7 +50,6 @@ class MessageHandler(object):
         else:
             print "Upsupported PLATFORM: %s" % PLATFORM
             sys.exit(1)
-
 
     def private_handler(self, msg):
         '''Handle hilights in private messages and query windows'''
@@ -103,11 +102,15 @@ p.add_argument('-H', '--host', default='localhost', help='Rabbitmq host')
 p.add_argument('-P', '--port', default=5672, help='Rabbitmq port')
 p.add_argument('-u', '--user', default='guest', help='Rabbitmq user')
 p.add_argument('-p', '--password', default='guest', help='Rabbitmq password')
-p.add_argument('-e', '--exchange', default='chat-notify', help='Rabbitmq exchange')
-p.add_argument('-q', '--queue', default='irc-notify-queue', help='Rabbitmq queue')
+p.add_argument('-e', '--exchange', default='chat-notify',
+               help='Rabbitmq exchange')
+p.add_argument('-q', '--queue', default='irc-notify-queue',
+               help='Rabbitmq queue')
 args = p.parse_args()
 
-conn_string = 'amqp://%s:%s@%s:%s' % (args.user, args.password, args.host, args.port)
+conn_string = 'amqp://%s:%s@%s:%s' % (args.user, args.password, args.host,
+                                      args.port)
+
 
 # TODO: declare queues if missing?
 try:
