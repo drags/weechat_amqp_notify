@@ -132,7 +132,7 @@ try:
         try:
             conn = BrokerConnection(conn_string)
             conn.connect()
-        except socket.error:
+        except(socket.error, IOError):
             print 'Rabbitmq at %s unavailable, trying again in 30s' \
                 % conn_string
             time.sleep(30)
